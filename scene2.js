@@ -10,7 +10,7 @@ let section2Background;
 
 // Character state for scene 2
 let character2 = {
-  x: 750, // start at far left when entering new area
+  x: 50, // start at far left when entering new area
   y: 750,
   direction: 1, // facing right
   currentFrame: 0,
@@ -24,22 +24,23 @@ let character2 = {
 
 let keysPressed2 = {};
 
-// Button data for scene 2
-const scene2Btn = {
-  x: 400,
-  y: 700,
-  w: 260,
-  h: 90,
-  label: "SCENE 2 BUTTON",
-};
+// Prompt for going back to scene 1
+let showBackPrompt = false;
 
-// Prompt for entering next area
-let showScene2EnterPrompt = false;
+// Interaction state for Walking Thing
+let interactionAvailable = false;
+let showInteractionOptions = false;
+
+// Ending state for option 1
+let endingActive = false;
+let endingAlpha = 0;
+let endingMessageTimer = 0;
 
 // Main draw function for this screen
 function drawScene2() {
   // Start video playback when first entering scene
-  if (section2BackgroundVideo && !section2BackgroundVideo.time() > 0) {
+  if (section2BackgroundVideo && !(section2BackgroundVideo.time() > 0)) {
+    section2BackgroundVideo.volume(1);
     section2BackgroundVideo.play();
   }
 
@@ -63,16 +64,19 @@ function drawScene2() {
   updateCharacter2();
   drawCharacter2();
 
-  // Check if character reached right edge to show enter prompt
-  if (character2.x > width - 120) {
-    showScene2EnterPrompt = true;
+  // Check if character reached left edge to show back prompt
+  if (character2.x < 120) {
+    showBackPrompt = true;
   } else {
-    showScene2EnterPrompt = false;
+    showBackPrompt = false;
   }
 
-  // Draw enter prompt if visible
-  if (showScene2EnterPrompt) {
-    drawScene2EnterPrompt();
+  // Check if character is near middle for interaction
+  if (abs(character2.x - width / 2) < 80) {
+    interactionAvailable = true;
+  } else {
+    interactionAvailable = false;
+    showInteractionOptions = false;
   }
 
   // Draw foreground
@@ -80,14 +84,31 @@ function drawScene2() {
     image(section2Foreground, 50, 0, width * 1.1, height * 1.075);
   }
 
+  // Draw back prompt after foreground
+  if (showBackPrompt) {
+    drawBackPrompt();
+  }
+
+  // Draw interaction options if visible
+  if (showInteractionOptions) {
+    drawInteractionOptions();
+  } else if (interactionAvailable) {
+    drawInteractionHint();
+  }
+
+  // Ending fade overlay
+  if (endingActive) {
+    drawEndingFade();
+  }
+
   cursor(ARROW);
 }
 
-// Draw enter prompt helper
-function drawScene2EnterPrompt() {
-  const promptX = 700;
+// Back prompt helper
+function drawBackPrompt() {
+  const promptX = 110;
   const promptY = height / 2;
-  const promptW = 180;
+  const promptW = 200;
   const promptH = 60;
 
   rectMode(CENTER);
@@ -100,23 +121,127 @@ function drawScene2EnterPrompt() {
   rect(promptX, promptY, promptW, promptH, 10);
 
   fill(255);
-  textSize(20);
+  textSize(18);
   textAlign(CENTER, CENTER);
-  text("Press E to Continue", promptX, promptY);
+  text("Go back (E)", promptX, promptY);
+}
+
+// Interaction hint
+function drawInteractionHint() {
+  const hintX = width / 2;
+  const hintY = height / 2 - 120;
+  rectMode(CENTER);
+  fill(0, 0, 0, 140);
+  rect(hintX, hintY, 240, 50, 10);
+  fill(255);
+  noStroke();
+  textSize(18);
+  textAlign(CENTER, CENTER);
+  text("Click to interact", hintX, hintY);
+}
+
+// Interaction options
+function drawInteractionOptions() {
+  const option1 = getOption1Rect();
+  const option2 = getOption2Rect();
+
+  rectMode(CENTER);
+  fill(0, 0, 0, 180);
+  rect(width / 2, height / 2 - 40, 460, 180, 14);
+
+  stroke(255);
+  strokeWeight(2);
+  noFill();
+  rect(width / 2, height / 2 - 40, 460, 180, 14);
+
+  // Option 1
+  fill(20, 20, 20, 200);
+  noStroke();
+  rect(option1.x, option1.y, option1.w, option1.h, 10);
+  fill(255);
+  textSize(16);
+  textAlign(CENTER, CENTER);
+  text("Grab Their LEG", option1.x, option1.y);
+
+  // Option 2
+  fill(20, 20, 20, 200);
+  rect(option2.x, option2.y, option2.w, option2.h, 10);
+  fill(255);
+  text("Will you be my mount, Walking Thing?", option2.x, option2.y);
+}
+
+function getOption1Rect() {
+  return { x: width / 2, y: height / 2 - 70, w: 360, h: 45 };
+}
+
+function getOption2Rect() {
+  return { x: width / 2, y: height / 2 + 10, w: 360, h: 45 };
+}
+
+// Ending fade helper
+function drawEndingFade() {
+  endingAlpha = min(255, endingAlpha + 5);
+  push();
+  noStroke();
+  rectMode(CORNER);
+  fill(0, 0, 0, endingAlpha);
+  rect(0, 0, width, height);
+  pop();
+
+  if (endingAlpha > 200) {
+    fill(255);
+    textSize(22);
+    textAlign(CENTER, CENTER);
+    text("They didn't like that, you were SQUASHED", width / 2, height / 2);
+    endingMessageTimer++;
+    if (endingMessageTimer > 120) {
+      endingActive = false;
+      endingAlpha = 0;
+      endingMessageTimer = 0;
+      currentScreen = "start";
+    }
+  }
 }
 
 // Mouse input for this screen
 function scene2MousePressed() {
-  if (isHover(scene2Btn)) {
-    // Handle button click
+  if (endingActive) return;
+
+  if (showBackPrompt) {
+    const backRect = { x: 110, y: height / 2, w: 200, h: 60 };
+    if (isHover(backRect)) {
+      startFade("game");
+      return;
+    }
+  }
+
+  if (interactionAvailable && !showInteractionOptions) {
+    showInteractionOptions = true;
+    return;
+  }
+
+  if (showInteractionOptions) {
+    const option1 = getOption1Rect();
+    const option2 = getOption2Rect();
+    if (isHover(option1)) {
+      endingActive = true;
+      endingAlpha = 0;
+      endingMessageTimer = 0;
+      showInteractionOptions = false;
+      return;
+    }
+    if (isHover(option2)) {
+      showInteractionOptions = false;
+      startFade("scene3");
+    }
   }
 }
 
 // Keyboard input for this screen
 function scene2KeyPressed() {
-  // E key to continue to next area
-  if ((key === "e" || key === "E") && showScene2EnterPrompt) {
-    currentScreen = "win"; // For now, go to win screen
+  // E key to go back to scene 1 when prompt is visible
+  if ((key === "e" || key === "E") && showBackPrompt) {
+    startFade("game");
     return;
   }
 

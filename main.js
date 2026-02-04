@@ -105,7 +105,7 @@ function setup() {
   section2BackgroundVideo = createVideo("assets/images/GROUND.mp4", () => {
     console.log("Section 2 video loaded successfully");
     section2BackgroundVideo.loop();
-    section2BackgroundVideo.volume(0);
+    section2BackgroundVideo.volume(1);
   });
   section2BackgroundVideo.hide();
 }
@@ -121,6 +121,7 @@ function draw() {
   //   instructions.js  → drawInstr()
   //   game.js          → drawGame()
   //   scene2.js        → drawScene2()
+  //   scene3.js        → drawScene3()
   //   win.js           → drawWin()
   //   lose.js          → drawLose()
 
@@ -128,6 +129,7 @@ function draw() {
   else if (currentScreen === "instr") drawInstr();
   else if (currentScreen === "game") drawGame();
   else if (currentScreen === "scene2") drawScene2();
+  else if (currentScreen === "scene3") drawScene3();
   else if (currentScreen === "win") drawWin();
   else if (currentScreen === "lose") drawLose();
 
@@ -156,6 +158,7 @@ function mousePressed() {
   // instructions.js  → instrMousePressed()
   // game.js          → gameMousePressed()
   // scene2.js        → scene2MousePressed()
+  // scene3.js        → scene3MousePressed()
   // win.js           → winMousePressed()
   // lose.js          → loseMousePressed()
 
@@ -163,6 +166,7 @@ function mousePressed() {
   else if (currentScreen === "instr") instrMousePressed();
   else if (currentScreen === "game") gameMousePressed();
   else if (currentScreen === "scene2") scene2MousePressed?.();
+  else if (currentScreen === "scene3") scene3MousePressed?.();
   // The ?.() means “call this function only if it exists”
   // This prevents errors if a screen doesn’t implement a handler.
   else if (currentScreen === "win") winMousePressed?.();
@@ -178,6 +182,8 @@ function keyPressed() {
   // start.js         → startKeyPressed()
   // instructions.js  → instrKeyPressed()
   // game.js          → gameKeyPressed()
+  // scene2.js        → scene2KeyPressed()
+  // scene3.js        → scene3KeyPressed()
   // win.js           → winKeyPressed()
   // lose.js          → loseKeyPressed()
 
@@ -185,6 +191,7 @@ function keyPressed() {
   else if (currentScreen === "instr") instrKeyPressed();
   else if (currentScreen === "game") gameKeyPressed?.();
   else if (currentScreen === "scene2") scene2KeyPressed?.();
+  else if (currentScreen === "scene3") scene3KeyPressed?.();
   else if (currentScreen === "win") winKeyPressed?.();
   else if (currentScreen === "lose") loseKeyPressed?.();
 }
@@ -197,9 +204,11 @@ function keyReleased() {
   // Each screen *may* define a key release handler:
   // game.js → gameKeyReleased()
   // scene2.js → scene2KeyReleased()
+  // scene3.js → scene3KeyReleased()
 
   if (currentScreen === "game") gameKeyReleased?.();
   else if (currentScreen === "scene2") scene2KeyReleased?.();
+  else if (currentScreen === "scene3") scene3KeyReleased?.();
 }
 
 // ------------------------------------------------------------
