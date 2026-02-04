@@ -56,15 +56,6 @@ function drawGame() {
     background(200, 220, 240);
   }
 
-  // ---- Instructions text ----
-  fill(255); // white text for visibility on background
-  stroke(0);
-  strokeWeight(2);
-  textSize(18);
-  textAlign(CENTER, TOP);
-  text("Press A to walk left, D to walk right", width / 2, 20);
-  noStroke(); // Reset stroke
-
   // ---- Update and draw character ----
   updateCharacter();
   drawCharacter();
@@ -76,15 +67,24 @@ function drawGame() {
     showEnterPrompt = false;
   }
 
-  // ---- Draw enter prompt if visible (before foreground) ----
-  if (showEnterPrompt) {
-    drawEnterPrompt();
-  }
-
   // ---- Draw foreground (in front of character and prompt) ----
   if (section1Foreground) {
     image(section1Foreground, 50, 0, width * 1.1, height * 1.075);
   }
+
+  // ---- Draw enter prompt if visible (on top of foreground) ----
+  if (showEnterPrompt) {
+    drawEnterPrompt();
+  }
+
+  // ---- Instructions text (draw last so it stays on top) ----
+  fill(255); // white text for visibility on background
+  stroke(0);
+  strokeWeight(2);
+  textSize(18);
+  textAlign(CENTER, TOP);
+  text("Press A to walk left, D to walk right", width / 2, 20);
+  noStroke(); // Reset stroke
 
   cursor(ARROW);
 

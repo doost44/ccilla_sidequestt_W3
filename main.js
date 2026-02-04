@@ -30,6 +30,10 @@ let currentScreen = "start"; // "start" | "instr" | "game" | "win" | "lose"
 let characterFrames = [];
 // Array to store processed frames with visual adjustments
 let processedCharacterFrames = [];
+// Array to store processed frames for scene2 with increased saturation
+let processedCharacterFramesScene2 = [];
+// Array to store processed frames for scene3 with reduced saturation
+let processedCharacterFramesScene3 = [];
 
 // Video and image assets
 let titleVideo;
@@ -37,6 +41,9 @@ let section1Background;
 let section1Foreground;
 let section2BackgroundVideo;
 let section2Foreground;
+let section3BackgroundVideo;
+let section4BackgroundVideo;
+let section4ShouldPlay = false;
 let videoPlaying = false;
 let videoStartTime = 0;
 
@@ -90,6 +97,22 @@ function setup() {
     processedCharacterFrames.push(processed);
   });
 
+  // Process frames for scene2 with increased saturation
+  processedCharacterFramesScene2 = [];
+  characterFrames.forEach((frame) => {
+    const processed = frame.get();
+    applyContrastAndSaturation(processed, 1.2, 1.8, 1.0, 0.0); // contrast, saturation, brightness, blackness
+    processedCharacterFramesScene2.push(processed);
+  });
+
+  // Process frames for scene3 with reduced saturation
+  processedCharacterFramesScene3 = [];
+  characterFrames.forEach((frame) => {
+    const processed = frame.get();
+    applyContrastAndSaturation(processed, 1.1, 1.0, 1.0, 0.15); // contrast, saturation, brightness, blackness
+    processedCharacterFramesScene3.push(processed);
+  });
+
   // Load video (must be done in setup, not preload)
   titleVideo = createVideo("assets/images/Goatman Title Screen.mp4");
   titleVideo.hide(); // Hide the DOM element, we'll draw it on canvas
@@ -108,6 +131,38 @@ function setup() {
     section2BackgroundVideo.volume(1);
   });
   section2BackgroundVideo.hide();
+
+  // Load section 3 background video
+  section3BackgroundVideo = createVideo("assets/images/savanaScene.mp4", () => {
+    console.log("Section 3 video loaded successfully");
+    section3BackgroundVideo.loop();
+    section3BackgroundVideo.volume(1);
+  });
+  section3BackgroundVideo.hide();
+
+  // Load section 4 background video
+  section4BackgroundVideo = createVideo(
+    "assets/images/Savana scene trigger.mp4",
+    () => {
+      console.log("Section 4 video loaded successfully");
+      section4BackgroundVideo.volume(1);
+      section4BackgroundVideo.pause();
+    },
+  );
+  section4BackgroundVideo.onended(() => {
+    section4ShouldPlay = false;
+    if (typeof scene4Initialized !== "undefined") {
+      scene4Initialized = false;
+    }
+    if (typeof scene4FlashActive !== "undefined") {
+      scene4FlashActive = false;
+    }
+    section4BackgroundVideo.pause();
+    section4BackgroundVideo.time(0);
+    startFade("start");
+  });
+  section4BackgroundVideo.hide();
+  section4BackgroundVideo.pause();
 }
 
 // ------------------------------
@@ -130,8 +185,14 @@ function draw() {
   else if (currentScreen === "game") drawGame();
   else if (currentScreen === "scene2") drawScene2();
   else if (currentScreen === "scene3") drawScene3();
+  else if (currentScreen === "scene4") drawScene4?.();
   else if (currentScreen === "win") drawWin();
   else if (currentScreen === "lose") drawLose();
+
+  // Keep scene4 video paused unless actively on scene4
+  if (currentScreen !== "scene4") {
+    section4BackgroundVideo?.pause();
+  }
 
   // Handle fade transition
   if (isFading) {

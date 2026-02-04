@@ -51,15 +51,6 @@ function drawScene2() {
     background(100, 150, 200); // fallback background
   }
 
-  // Instructions text
-  fill(255);
-  stroke(0);
-  strokeWeight(2);
-  textSize(18);
-  textAlign(CENTER, TOP);
-  text("Scene 2 - Press A/D to walk", width / 2, 20);
-  noStroke();
-
   // Update and draw character
   updateCharacter2();
   drawCharacter2();
@@ -100,6 +91,15 @@ function drawScene2() {
   if (endingActive) {
     drawEndingFade();
   }
+
+  // Instructions text (draw last so it stays on top)
+  fill(255);
+  stroke(0);
+  strokeWeight(2);
+  textSize(18);
+  textAlign(CENTER, TOP);
+  text("Scene 2 - Press A/D to walk", width / 2, 20);
+  noStroke();
 
   cursor(ARROW);
 }
@@ -329,8 +329,8 @@ function drawCharacter2() {
     scale(-1, 1);
   }
 
-  // Use unprocessed frames (no filters) in scene 2
-  const framesToDraw = characterFrames;
+  // Use processed frames with increased saturation for scene 2
+  const framesToDraw = processedCharacterFramesScene2;
 
   if (framesToDraw[character2.currentFrame]) {
     let img = framesToDraw[character2.currentFrame];
