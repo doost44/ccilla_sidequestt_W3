@@ -11,44 +11,60 @@
 // drawStart() is called from main.js only when:
 // currentScreen === "start"
 function drawStart() {
-  // Background colour for the start screen
-  background(180, 225, 220); // soft teal background
+  // Black background
+  background(0);
 
-  // ---- Title text ----
-  fill(30, 50, 60);
-  textSize(46);
-  textAlign(CENTER, CENTER);
-  text("Win or Lose", width / 2, 180);
+  // Draw video if it exists
+  if (titleVideo) {
+    // Show first frame of video
+    if (!videoPlaying) {
+      titleVideo.time(0); // Set to first frame
+    }
+    image(titleVideo, 0, 0, width, height);
+  }
 
-  // ---- Buttons (data only) ----
-  // These objects store the position/size/label for each button.
-  // Using objects makes it easy to pass them into drawButton()
-  // and also reuse the same information for hover checks.
-  const startBtn = {
-    x: width / 2,
-    y: 320,
-    w: 240,
-    h: 80,
-    label: "START",
-  };
+  // Skip button (fades in during video)
+  if (videoPlaying) {
+    let fadeAlpha = 0;
+    let timeSinceStart = millis() - videoStartTime;
 
-  const instrBtn = {
-    x: width / 2,
-    y: 430,
-    w: 240,
-    h: 80,
-    label: "INSTRUCTIONS",
-  };
+    // Fade in over 2 seconds
+    if (timeSinceStart > 1000) {
+      fadeAlpha = map(timeSinceStart, 1000, 3000, 0, 255);
+      fadeAlpha = constrain(fadeAlpha, 0, 255);
 
-  // Draw both buttons
-  drawButton(startBtn);
-  drawButton(instrBtn);
+      const skipBtn = {
+        x: width - 120,
+        y: height - 60,
+        w: 100,
+        h: 40,
+        label: "SKIP",
+      };
 
-  // ---- Cursor feedback ----
-  // If the mouse is over either button, show a hand cursor
-  // so the player knows it is clickable.
-  const over = isHover(startBtn) || isHover(instrBtn);
-  cursor(over ? HAND : ARROW);
+      drawSkipButton(skipBtn, fadeAlpha);
+
+      const over = isHover(skipBtn);
+      cursor(over ? HAND : ARROW);
+    }
+  }
+
+  // ---- Start Button (only if video not playing) ----
+  if (!videoPlaying) {
+    const startBtn = {
+      x: 200, // Left side of screen
+      y: height / 2,
+      w: 240,
+      h: 80,
+      label: "START",
+    };
+
+    // Draw start button
+    drawButton(startBtn);
+
+    // ---- Cursor feedback ----
+    const over = isHover(startBtn);
+    cursor(over ? HAND : ARROW);
+  }
 }
 
 // ------------------------------------------------------------
@@ -56,17 +72,27 @@ function drawStart() {
 // ------------------------------------------------------------
 // Called from main.js only when currentScreen === "start"
 function startMousePressed() {
-  // For input checks, we only need x,y,w,h (label is optional)
-  const startBtn = { x: width / 2, y: 320, w: 240, h: 80 };
-  const instrBtn = { x: width / 2, y: 430, w: 240, h: 80 };
+  if (!videoPlaying) {
+    const startBtn = { x: 200, y: height / 2, w: 240, h: 80 };
 
-  // If START is clicked, go to the game screen
-  if (isHover(startBtn)) {
-    currentScreen = "game";
-  }
-  // If INSTRUCTIONS is clicked, go to the instructions screen
-  else if (isHover(instrBtn)) {
-    currentScreen = "instr";
+    // If START is clicked, play the video
+    if (isHover(startBtn)) {
+      titleVideo.play();
+      videoPlaying = true;
+      videoStartTime = millis();
+    }
+  } else {
+    // Check if skip button is clicked
+    let timeSinceStart = millis() - videoStartTime;
+    if (timeSinceStart > 1000) {
+      const skipBtn = { x: width - 120, y: height - 60, w: 100, h: 40 };
+      if (isHover(skipBtn)) {
+        titleVideo.pause();
+        currentScreen = "game";
+        videoPlaying = false;
+        videoStartTime = 0;
+      }
+    }
   }
 }
 
@@ -74,15 +100,19 @@ function startMousePressed() {
 // Keyboard input for the start screen
 // ------------------------------------------------------------
 // Provides keyboard shortcuts:
-// - ENTER starts the game
-// - I opens instructions
+// - ENTER starts the video
+// - ESC skips the video
 function startKeyPressed() {
-  if (keyCode === ENTER) {
+  if (keyCode === ENTER && !videoPlaying) {
+    titleVideo.play();
+    videoPlaying = true;
+    videoStartTime = millis();
+  } else if (keyCode === ESCAPE && videoPlaying) {
+    // ESC key to skip video
+    titleVideo.pause();
     currentScreen = "game";
-  }
-
-  if (key === "i" || key === "I") {
-    currentScreen = "instr";
+    videoPlaying = false;
+    videoStartTime = 0;
   }
 }
 
@@ -132,6 +162,29 @@ function drawButton({ x, y, w, h, label }) {
   // Draw the label text on top of the button
   fill(40, 60, 70);
   textSize(28);
+  textAlign(CENTER, CENTER);
+  text(label, x, y);
+}
+
+// ------------------------------------------------------------
+// Helper: drawSkipButton()
+// ------------------------------------------------------------
+function drawSkipButton({ x, y, w, h, label }, fadeAlpha) {
+  rectMode(CENTER);
+  const hover = isHover({ x, y, w, h });
+
+  noStroke();
+
+  if (hover) {
+    fill(255, 100, 100, fadeAlpha * 0.9);
+  } else {
+    fill(50, 50, 50, fadeAlpha * 0.7);
+  }
+
+  rect(x, y, w, h, 8);
+
+  fill(255, 255, 255, fadeAlpha);
+  textSize(16);
   textAlign(CENTER, CENTER);
   text(label, x, y);
 }
